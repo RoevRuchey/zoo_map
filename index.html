@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* (стили без изменений) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: system-ui, 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; }
         #map { flex: 1; z-index: 1; }
@@ -151,7 +152,6 @@
         }
         .nav-link:hover { background: #5a6268; }
 
-        /* Общий стиль для иконок с чёткой границей */
         .animal-marker div, .quest-marker div, .building-marker div {
             font-size: 28px;
             text-shadow: 0 0 0 #fff, 0 0 0 #fff, 0 0 0 #fff, 0 0 0 #fff,
@@ -166,606 +166,597 @@
             background: none !important;
             border: none !important;
         }
-        /* Скрыть кнопки добавления до авторизации */
         #addAnimalBtn, #addQuestBtn, #addBuildingPublicBtn, #addBuildingTechnicalBtn {
             display: none;
         }
     </style>
 </head>
 <body>
-<div class="controls">
-    <div class="left-controls">
-        <button id="addAnimalBtn" class="btn-animal">➕ Добавить животное</button>
-        <button id="addQuestBtn" class="btn-quest">📍 Создать локацию</button>
-        <button id="addBuildingPublicBtn" class="btn-building-public">🏢 Создать общественное здание</button>
-        <button id="addBuildingTechnicalBtn" class="btn-building-technical">🔧 Создать техническое здание</button>
-        <div class="filter-group">
-            <label><input type="checkbox" id="filterAnimals" checked> 🐘 Животные</label>
-            <label><input type="checkbox" id="filterQuests" checked> 📍 Квесты</label>
-            <label><input type="checkbox" id="filterPublicBuildings" checked> 🏢 Общественные</label>
-            <label><input type="checkbox" id="filterTechnicalBuildings" checked> 🔧 Технические</label>
+    <!-- (Тот же HTML, что и раньше: controls, модалки) -->
+    <div class="controls">
+        <div class="left-controls">
+            <button id="addAnimalBtn" class="btn-animal">➕ Добавить животное</button>
+            <button id="addQuestBtn" class="btn-quest">📍 Создать локацию</button>
+            <button id="addBuildingPublicBtn" class="btn-building-public">🏢 Создать общественное здание</button>
+            <button id="addBuildingTechnicalBtn" class="btn-building-technical">🔧 Создать техническое здание</button>
+            <div class="filter-group">
+                <label><input type="checkbox" id="filterAnimals" checked> 🐘 Животные</label>
+                <label><input type="checkbox" id="filterQuests" checked> 📍 Квесты</label>
+                <label><input type="checkbox" id="filterPublicBuildings" checked> 🏢 Общественные</label>
+                <label><input type="checkbox" id="filterTechnicalBuildings" checked> 🔧 Технические</label>
+            </div>
+            <a href="index.html" class="nav-link">🐘 Карта животных</a>
+            <a href="quest_map.html" class="nav-link">📍 Карта квестов</a>
         </div>
-        <a href="index.html" class="nav-link">🐘 Карта животных</a>
-        <a href="quest_map.html" class="nav-link">📍 Карта квестов</a>
-    </div>
-    <div class="right-controls">
-        <div class="auth-area">
-            <input type="password" id="passwordInput" placeholder="Пароль сотрудника">
-            <button id="loginBtn">🔑 Войти</button>
-            <div id="authStatus" class="status">👀 Только просмотр</div>
+        <div class="right-controls">
+            <div class="auth-area">
+                <input type="password" id="passwordInput" placeholder="Пароль сотрудника">
+                <button id="loginBtn">🔑 Войти</button>
+                <div id="authStatus" class="status">👀 Только просмотр</div>
+            </div>
         </div>
     </div>
-</div>
-<div id="map"></div>
+    <div id="map"></div>
 
-<!-- Модалка для животного -->
-<div id="animalModal" class="modal">
-    <div class="modal-card">
-        <h3>Новое животное</h3>
-        <input type="text" id="animalName" placeholder="Имя (необязательно)">
-        <input type="text" id="animalSpecies" list="speciesOptions" placeholder="Вид *" required>
-        <datalist id="speciesOptions">
-            <option>Лев</option><option>Тигр</option><option>Слон</option>
-            <option>Жираф</option><option>Пингвин</option><option>Медведь</option>
-            <option>Обезьяна</option><option>Зебра</option><option>Волк</option>
-            <option>Лиса</option><option>Крокодил</option><option>Фламинго</option>
-            <option>Зубр</option><option>Верблюд</option><option>Муфлон</option>
-            <option>Косуля</option><option>Овцебык</option><option>Лось</option>
-            <option>Гуанако</option><option>Альпака</option><option>Северный олень</option>
-            <option>Пони</option><option>Тапир</option><option>Пекари</option>
-            <option>Гну</option><option>Орикс</option><option>Осёл</option>
-            <option>Дикобраз</option><option>Пака</option><option>Мара</option>
-            <option>Заяц</option><option>Белка</option><option>Лемур</option>
-            <option>Потто</option><option>Галаго</option><option>Игрунка</option>
-            <option>Тамарин</option><option>Саймири</option><option>Капуцин</option>
-            <option>Мангобей</option><option>Колобус</option><option>Гиббон</option>
-            <option>Шимпанзе</option><option>Хаски</option><option>Енотовидная собака</option>
-            <option>Носуха</option><option>Скунс</option><option>Енот</option>
-            <option>Мангуст</option><option>Сурикат</option><option>Фенек</option>
-            <option>Белый медведь</option><option>Бурый медведь</option>
-            <option>Харза</option><option>Соболь</option><option>Барсук</option>
-            <option>Выдра</option><option>Рысь</option><option>Рысь рыжая</option>
-            <option>Сервал</option><option>Кот</option><option>Леопард</option>
-            <option>Пума</option><option>Ягуар</option><option>Манул</option>
-            <option>Камышовый кот</option><option>Валлаби</option><option>Даман</option>
-            <option>Ёж</option><option>Хищная птица</option><option>Птица</option>
-        </datalist>
-        <textarea id="animalNote" placeholder="Краткая информация (необязательно)"></textarea>
-        <button id="saveAnimalBtn">✨ Создать</button>
-        <button id="closeAnimalModal" class="btn-close-modal">Отмена</button>
+    <!-- Модалки (те же) -->
+    <div id="animalModal" class="modal">
+        <div class="modal-card">
+            <h3>Новое животное</h3>
+            <input type="text" id="animalName" placeholder="Имя (необязательно)">
+            <input type="text" id="animalSpecies" list="speciesOptions" placeholder="Вид *" required>
+            <datalist id="speciesOptions">
+                <option>Лев</option><option>Тигр</option><option>Слон</option>
+                <option>Жираф</option><option>Пингвин</option><option>Медведь</option>
+                <option>Обезьяна</option><option>Зебра</option><option>Волк</option>
+                <option>Лиса</option><option>Крокодил</option><option>Фламинго</option>
+                <option>Зубр</option><option>Верблюд</option><option>Муфлон</option>
+                <option>Косуля</option><option>Овцебык</option><option>Лось</option>
+                <option>Гуанако</option><option>Альпака</option><option>Северный олень</option>
+                <option>Пони</option><option>Тапир</option><option>Пекари</option>
+                <option>Гну</option><option>Орикс</option><option>Осёл</option>
+                <option>Дикобраз</option><option>Пака</option><option>Мара</option>
+                <option>Заяц</option><option>Белка</option><option>Лемур</option>
+                <option>Потто</option><option>Галаго</option><option>Игрунка</option>
+                <option>Тамарин</option><option>Саймири</option><option>Капуцин</option>
+                <option>Мангобей</option><option>Колобус</option><option>Гиббон</option>
+                <option>Шимпанзе</option><option>Хаски</option><option>Енотовидная собака</option>
+                <option>Носуха</option><option>Скунс</option><option>Енот</option>
+                <option>Мангуст</option><option>Сурикат</option><option>Фенек</option>
+                <option>Белый медведь</option><option>Бурый медведь</option>
+                <option>Харза</option><option>Соболь</option><option>Барсук</option>
+                <option>Выдра</option><option>Рысь</option><option>Рысь рыжая</option>
+                <option>Сервал</option><option>Кот</option><option>Леопард</option>
+                <option>Пума</option><option>Ягуар</option><option>Манул</option>
+                <option>Камышовый кот</option><option>Валлаби</option><option>Даман</option>
+                <option>Ёж</option><option>Хищная птица</option><option>Птица</option>
+            </datalist>
+            <textarea id="animalNote" placeholder="Краткая информация (необязательно)"></textarea>
+            <button id="saveAnimalBtn">✨ Создать</button>
+            <button id="closeAnimalModal" class="btn-close-modal">Отмена</button>
+        </div>
     </div>
-</div>
 
-<!-- Модалка для квеста (локация) -->
-<div id="questModal" class="modal">
-    <div class="modal-card">
-        <h3>Новая локация квеста</h3>
-        <input type="text" id="questLocationName" placeholder="Название локации *" required>
-        <input type="text" id="questName" placeholder="Название квеста *" required>
-        <select id="questType">
-            <option value="holiday">Праздничная программа</option>
-            <option value="by_appointment">Программа по записи</option>
-        </select>
-        <textarea id="questDescription" placeholder="Описание (необязательно)"></textarea>
-        <button id="saveQuestBtn">📍 Создать</button>
-        <button id="closeQuestModal" class="btn-close-modal">Отмена</button>
+    <div id="questModal" class="modal">
+        <div class="modal-card">
+            <h3>Новая локация квеста</h3>
+            <input type="text" id="questLocationName" placeholder="Название локации *" required>
+            <input type="text" id="questName" placeholder="Название квеста *" required>
+            <select id="questType">
+                <option value="holiday">Праздничная программа</option>
+                <option value="by_appointment">Программа по записи</option>
+            </select>
+            <textarea id="questDescription" placeholder="Описание (необязательно)"></textarea>
+            <button id="saveQuestBtn">📍 Создать</button>
+            <button id="closeQuestModal" class="btn-close-modal">Отмена</button>
+        </div>
     </div>
-</div>
 
-<!-- Модалка для общественного здания -->
-<div id="buildingPublicModal" class="modal">
-    <div class="modal-card">
-        <h3>Новое общественное здание</h3>
-        <input type="text" id="buildingPublicName" placeholder="Название *" required>
-        <select id="buildingPublicType">
-            <option value="cafe">Кафе</option>
-            <option value="toilet">Туалет</option>
-            <option value="mother_child">Комната матери и ребёнка</option>
-            <option value="medical">Медпункт</option>
-            <option value="event_venue">Площадка для мероприятий</option>
-            <option value="exposition">Экспозиция</option>
-        </select>
-        <input type="text" id="buildingPublicHours" placeholder="Время работы (например, 10:00-18:00)">
-        <textarea id="buildingPublicDescription" placeholder="Описание (необязательно)"></textarea>
-        <button id="saveBuildingPublicBtn">🏢 Создать</button>
-        <button id="closeBuildingPublicModal" class="btn-close-modal">Отмена</button>
+    <div id="buildingPublicModal" class="modal">
+        <div class="modal-card">
+            <h3>Новое общественное здание</h3>
+            <input type="text" id="buildingPublicName" placeholder="Название *" required>
+            <select id="buildingPublicType">
+                <option value="cafe">Кафе</option>
+                <option value="toilet">Туалет</option>
+                <option value="mother_child">Комната матери и ребёнка</option>
+                <option value="medical">Медпункт</option>
+                <option value="event_venue">Площадка для мероприятий</option>
+                <option value="exposition">Экспозиция</option>
+            </select>
+            <input type="text" id="buildingPublicHours" placeholder="Время работы (например, 10:00-18:00)">
+            <textarea id="buildingPublicDescription" placeholder="Описание (необязательно)"></textarea>
+            <button id="saveBuildingPublicBtn">🏢 Создать</button>
+            <button id="closeBuildingPublicModal" class="btn-close-modal">Отмена</button>
+        </div>
     </div>
-</div>
 
-<!-- Модалка для технического здания (без типа) -->
-<div id="buildingTechnicalModal" class="modal">
-    <div class="modal-card">
-        <h3>Новое техническое здание</h3>
-        <p style="color: #555; font-size: 14px; margin-bottom: 12px;">Здание будет создано с иконкой 🔧 и подписью «Техническое здание».</p>
-        <button id="saveBuildingTechnicalBtn">🔧 Создать</button>
-        <button id="closeBuildingTechnicalModal" class="btn-close-modal">Отмена</button>
+    <div id="buildingTechnicalModal" class="modal">
+        <div class="modal-card">
+            <h3>Новое техническое здание</h3>
+            <p style="color: #555; font-size: 14px; margin-bottom: 12px;">Здание будет создано с иконкой 🔧 и подписью «Техническое здание».</p>
+            <button id="saveBuildingTechnicalBtn">🔧 Создать</button>
+            <button id="closeBuildingTechnicalModal" class="btn-close-modal">Отмена</button>
+        </div>
     </div>
-</div>
 
-<script>
-    // ========== НАСТРОЙКИ SUPABASE ==========
-    const SUPABASE_URL = 'https://ваш-проект.supabase.co'; // замените
-    const SUPABASE_ANON_KEY = 'ваш-анонимный-ключ';      // замените
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // ← переименовано
+    <script>
+        // ========== НАСТРОЙКИ SUPABASE ==========
+        const SUPABASE_URL = 'https://ваш-проект.supabase.co'; // замените
+        const SUPABASE_ANON_KEY = 'ваш-анонимный-ключ';      // замените
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ========== КАРТА ==========
-    const zooMapImageUrl = 'zoo_map.png';
-    const imageBounds = [[56.00, 92.80], [56.04, 92.94]];
+        // ========== КАРТА ==========
+        const zooMapImageUrl = 'zoo_map.png';
+        const imageBounds = [[56.00, 92.80], [56.04, 92.94]];
+        const map = L.map('map', { zoomControl: true }).setView([56.02, 92.87], 15);
+        map.setMinZoom(12);
+        map.setMaxZoom(18);
+        L.imageOverlay(zooMapImageUrl, imageBounds, { opacity: 1, interactive: false }).addTo(map);
+        map.fitBounds(imageBounds);
+        map.setMaxBounds(imageBounds);
 
-    const map = L.map('map', { zoomControl: true }).setView([56.02, 92.87], 15);
-    map.setMinZoom(12);
-    map.setMaxZoom(18);
-    L.imageOverlay(zooMapImageUrl, imageBounds, { opacity: 1, interactive: false }).addTo(map);
-    map.fitBounds(imageBounds);
-    map.setMaxBounds(imageBounds);
+        const markersMap = new Map();
+        let isAuthorized = false;
+        const CORRECT_PASSWORD = "1";
 
-    // ========== ХРАНИЛИЩЕ МАРКЕРОВ ==========
-    const markersMap = new Map();
-    let isAuthorized = false;
-    const CORRECT_PASSWORD = "1";
+        let filterAnimals = true;
+        let filterQuests = true;
+        let filterPublicBuildings = true;
+        let filterTechnicalBuildings = true;
 
-    // Состояния фильтров
-    let filterAnimals = true;
-    let filterQuests = true;
-    let filterPublicBuildings = true;
-    let filterTechnicalBuildings = true;
-
-    // ========== ФУНКЦИИ ИКОНОК ==========
-    function getAnimalIcon(species) {
-        const s = (species || "").toLowerCase();
-        const mapIcons = {
-            "зубр": "🦬", "верблюд": "🐪", "муфлон": "🐏", "косуля": "🦌",
-            "винторогий козел": "🐐", "горный козел": "🐐", "пятнистый олень": "🦌",
-            "марал": "🦌", "овцебык": "🦬", "лось": "🦌", "гуанако": "🦙",
-            "альпака": "🦙", "северный олень": "🦌", "коза": "🐐", "пони": "🐴",
-            "мини-лошадь": "🐴", "голубой баран": "🐏", "тапир": "🐗", "пекари": "🐗",
-            "гну": "🐃", "орикс": "🐐", "зебра": "🦓", "жираф": "🦒", "осёл": "🐴",
-            "овца": "🐑", "валлийская овца": "🐑",
-            "дикобраз": "🦔", "пака": "🐭", "мара": "🐰", "заяц": "🐇",
-            "белка": "🐿️", "белка-летяга": "🐿️", "белка превоста": "🐿️",
-            "лемур": "🐒", "потто": "🐒", "галаго": "🐒", "игрунка": "🐒",
-            "тамарин": "🐒", "саймири": "🐒", "капуцин": "🐒", "мангобей": "🐒",
-            "колобус": "🐒", "гиббон": "🐒", "шимпанзе": "🐒",
-            "хаски": "🐕", "самоедская собака": "🐕", "енотовидная собака": "🦝",
-            "лесной хорек": "🦡", "носуха": "🦝", "скунс": "🦨", "енот": "🦝",
-            "мангуст": "🦡", "генетта": "🐱", "сурикат": "🦡", "фенек": "🦊",
-            "волк": "🐺", "белый медведь": "🐻‍❄️", "бурый медведь": "🐻",
-            "медведь бурый тяньшанский": "🐻", "медведь гималайский": "🐻",
-            "харза": "🦡", "соболь": "🦡", "барсук": "🦡", "выдра": "🦦",
-            "рысь": "🐱", "рысь рыжая": "🐱", "сервал": "🐱", "кот": "🐱",
-            "кот бенгальский": "🐱", "кот дальневосточный": "🐱", "леопард": "🐆",
-            "пума": "🐆", "тигр": "🐅", "ягуар": "🐆", "лев": "🦁",
-            "манул": "🐱", "камышовый кот": "🐱", "лиса": "🦊",
-            "валлаби": "🦘", "даман": "🐭", "ёж": "🦔",
-            "хищная птица": "🦅", "орел": "🦅", "сокол": "🦅", "ястреб": "🦅",
-            "птица": "🐦", "попугай": "🦜", "страус": "🐦",
-            "рептилия": "🐍", "ящерица": "🦎", "крокодил": "🐊",
-            "амфибия": "🐸", "рыба": "🐟", "акула": "🦈",
-            "насекомое": "🐞", "паук": "🕷️"
-        };
-        let emoji = "🐾";
-        for (let [kw, e] of Object.entries(mapIcons)) {
-            if (s.includes(kw)) { emoji = e; break; }
-        }
-        if (emoji === "🐾") {
-            if (s.includes("олень") || s.includes("лось")) emoji = "🦌";
-            else if (s.includes("коз") || s.includes("баран") || s.includes("овц")) emoji = "🐐";
-            else if (s.includes("лошад") || s.includes("пони")) emoji = "🐴";
-            else if (s.includes("медвед")) emoji = "🐻";
-            else if (s.includes("обезьян") || s.includes("примат")) emoji = "🐒";
-            else if (s.includes("собак") || s.includes("волк")) emoji = "🐺";
-            else if (s.includes("лис")) emoji = "🦊";
-            else if (s.includes("кот") || s.includes("кошк")) emoji = "🐱";
-            else if (s.includes("грызун") || s.includes("белк") || s.includes("заяц")) emoji = "🐭";
-            else if (s.includes("птиц") || s.includes("сокол") || s.includes("орел")) emoji = "🦅";
-            else if (s.includes("змея") || s.includes("ящериц")) emoji = "🐍";
-            else if (s.includes("крокодил")) emoji = "🐊";
-            else if (s.includes("рыб")) emoji = "🐟";
-            else if (s.includes("амфиб") || s.includes("лягуш")) emoji = "🐸";
-        }
-        return L.divIcon({
-            html: `<div>${emoji}</div>`,
-            iconSize: [32, 32],
-            popupAnchor: [0, -12],
-            className: 'animal-marker'
-        });
-    }
-
-    function getQuestIcon(type) {
-        let emoji = type === 'holiday' ? '📌' : '📅';
-        return L.divIcon({
-            html: `<div>${emoji}</div>`,
-            iconSize: [32, 32],
-            popupAnchor: [0, -12],
-            className: 'quest-marker'
-        });
-    }
-
-    function getBuildingIcon(category, type) {
-        if (category === 'technical') {
+        // ========== ИКОНКИ ==========
+        function getAnimalIcon(species) {
+            const s = (species || "").toLowerCase();
+            const mapIcons = {
+                "зубр": "🦬", "верблюд": "🐪", "муфлон": "🐏", "косуля": "🦌",
+                "винторогий козел": "🐐", "горный козел": "🐐", "пятнистый олень": "🦌",
+                "марал": "🦌", "овцебык": "🦬", "лось": "🦌", "гуанако": "🦙",
+                "альпака": "🦙", "северный олень": "🦌", "коза": "🐐", "пони": "🐴",
+                "мини-лошадь": "🐴", "голубой баран": "🐏", "тапир": "🐗", "пекари": "🐗",
+                "гну": "🐃", "орикс": "🐐", "зебра": "🦓", "жираф": "🦒", "осёл": "🐴",
+                "овца": "🐑", "валлийская овца": "🐑",
+                "дикобраз": "🦔", "пака": "🐭", "мара": "🐰", "заяц": "🐇",
+                "белка": "🐿️", "белка-летяга": "🐿️", "белка превоста": "🐿️",
+                "лемур": "🐒", "потто": "🐒", "галаго": "🐒", "игрунка": "🐒",
+                "тамарин": "🐒", "саймири": "🐒", "капуцин": "🐒", "мангобей": "🐒",
+                "колобус": "🐒", "гиббон": "🐒", "шимпанзе": "🐒",
+                "хаски": "🐕", "самоедская собака": "🐕", "енотовидная собака": "🦝",
+                "лесной хорек": "🦡", "носуха": "🦝", "скунс": "🦨", "енот": "🦝",
+                "мангуст": "🦡", "генетта": "🐱", "сурикат": "🦡", "фенек": "🦊",
+                "волк": "🐺", "белый медведь": "🐻‍❄️", "бурый медведь": "🐻",
+                "медведь бурый тяньшанский": "🐻", "медведь гималайский": "🐻",
+                "харза": "🦡", "соболь": "🦡", "барсук": "🦡", "выдра": "🦦",
+                "рысь": "🐱", "рысь рыжая": "🐱", "сервал": "🐱", "кот": "🐱",
+                "кот бенгальский": "🐱", "кот дальневосточный": "🐱", "леопард": "🐆",
+                "пума": "🐆", "тигр": "🐅", "ягуар": "🐆", "лев": "🦁",
+                "манул": "🐱", "камышовый кот": "🐱", "лиса": "🦊",
+                "валлаби": "🦘", "даман": "🐭", "ёж": "🦔",
+                "хищная птица": "🦅", "орел": "🦅", "сокол": "🦅", "ястреб": "🦅",
+                "птица": "🐦", "попугай": "🦜", "страус": "🐦",
+                "рептилия": "🐍", "ящерица": "🦎", "крокодил": "🐊",
+                "амфибия": "🐸", "рыба": "🐟", "акула": "🦈",
+                "насекомое": "🐞", "паук": "🕷️"
+            };
+            let emoji = "🐾";
+            for (let [kw, e] of Object.entries(mapIcons)) {
+                if (s.includes(kw)) { emoji = e; break; }
+            }
+            if (emoji === "🐾") {
+                if (s.includes("олень") || s.includes("лось")) emoji = "🦌";
+                else if (s.includes("коз") || s.includes("баран") || s.includes("овц")) emoji = "🐐";
+                else if (s.includes("лошад") || s.includes("пони")) emoji = "🐴";
+                else if (s.includes("медвед")) emoji = "🐻";
+                else if (s.includes("обезьян") || s.includes("примат")) emoji = "🐒";
+                else if (s.includes("собак") || s.includes("волк")) emoji = "🐺";
+                else if (s.includes("лис")) emoji = "🦊";
+                else if (s.includes("кот") || s.includes("кошк")) emoji = "🐱";
+                else if (s.includes("грызун") || s.includes("белк") || s.includes("заяц")) emoji = "🐭";
+                else if (s.includes("птиц") || s.includes("сокол") || s.includes("орел")) emoji = "🦅";
+                else if (s.includes("змея") || s.includes("ящериц")) emoji = "🐍";
+                else if (s.includes("крокодил")) emoji = "🐊";
+                else if (s.includes("рыб")) emoji = "🐟";
+                else if (s.includes("амфиб") || s.includes("лягуш")) emoji = "🐸";
+            }
             return L.divIcon({
-                html: `<div>🔧</div>`,
+                html: `<div>${emoji}</div>`,
+                iconSize: [32, 32],
+                popupAnchor: [0, -12],
+                className: 'animal-marker'
+            });
+        }
+
+        function getQuestIcon(type) {
+            let emoji = type === 'holiday' ? '📌' : '📅';
+            return L.divIcon({
+                html: `<div>${emoji}</div>`,
+                iconSize: [32, 32],
+                popupAnchor: [0, -12],
+                className: 'quest-marker'
+            });
+        }
+
+        function getBuildingIcon(category, type) {
+            if (category === 'technical') {
+                return L.divIcon({
+                    html: `<div>🔧</div>`,
+                    iconSize: [32, 32],
+                    popupAnchor: [0, -12],
+                    className: 'building-marker'
+                });
+            }
+            let emoji = '🏢';
+            const t = (type || '').toLowerCase();
+            if (t.includes('cafe')) emoji = '☕';
+            else if (t.includes('toilet')) emoji = '🚻';
+            else if (t.includes('mother_child')) emoji = '👶';
+            else if (t.includes('medical')) emoji = '🏥';
+            else if (t.includes('event_venue')) emoji = '🎪';
+            else if (t.includes('exposition')) emoji = '🌴';
+            return L.divIcon({
+                html: `<div>${emoji}</div>`,
                 iconSize: [32, 32],
                 popupAnchor: [0, -12],
                 className: 'building-marker'
             });
         }
-        // public
-        let emoji = '🏢';
-        const t = (type || '').toLowerCase();
-        if (t.includes('cafe')) emoji = '☕';
-        else if (t.includes('toilet')) emoji = '🚻';
-        else if (t.includes('mother_child')) emoji = '👶';
-        else if (t.includes('medical')) emoji = '🏥';
-        else if (t.includes('event_venue')) emoji = '🎪';
-        else if (t.includes('exposition')) emoji = '🌴';
-        return L.divIcon({
-            html: `<div>${emoji}</div>`,
-            iconSize: [32, 32],
-            popupAnchor: [0, -12],
-            className: 'building-marker'
-        });
-    }
 
-    // ========== ПОПАПЫ ==========
-    function createAnimalPopup(animal) {
-        let html = `<div style="min-width:140px;">`;
-        if (animal.name) html += `<strong>${escapeHtml(animal.name)}</strong><br>`;
-        html += `<span>🧬 ${escapeHtml(animal.species)}</span>`;
-        if (animal.note) html += `<br><span style="font-size:13px;color:#555;">📝 ${escapeHtml(animal.note)}</span>`;
-        if (isAuthorized) {
-            html += `<br><button class="delete-btn" data-table="animals" data-id="${animal.id}" style="margin-top:8px; background:#c0392b; color:white; border:none; padding:4px 12px; border-radius:20px; cursor:pointer;">🗑 Удалить</button>`;
-        }
-        html += `</div>`;
-        return html;
-    }
-
-    function createQuestPopup(quest) {
-        let html = `<div style="min-width:160px;">`;
-        if (quest.location_name) html += `<strong>📍 ${escapeHtml(quest.location_name)}</strong><br>`;
-        if (quest.name) {
-            const typeLabel = quest.type === 'holiday' ? 'Праздничная' : 'По записи';
-            html += `<span>${escapeHtml(quest.name)} (${typeLabel})</span><br>`;
-        }
-        if (quest.description) html += `<span style="font-size:13px;color:#555;">📝 ${escapeHtml(quest.description)}</span>`;
-        if (isAuthorized) {
-            html += `<br><button class="delete-btn" data-table="quests" data-id="${quest.id}" style="margin-top:8px; background:#c0392b; color:white; border:none; padding:4px 12px; border-radius:20px; cursor:pointer;">🗑 Удалить</button>`;
-        }
-        html += `</div>`;
-        return html;
-    }
-
-    function createBuildingPopup(building) {
-        let html = `<div style="min-width:140px;">`;
-        if (building.category === 'technical') {
-            html += `<strong>🔧 Техническое здание</strong>`;
-        } else {
-            if (building.name) html += `<strong>${escapeHtml(building.name)}</strong><br>`;
-            const typeMap = {
-                'cafe': 'Кафе', 'toilet': 'Туалет', 'mother_child': 'Комната матери и ребёнка',
-                'medical': 'Медпункт', 'event_venue': 'Площадка для мероприятий', 'exposition': 'Экспозиция'
-            };
-            if (building.type && typeMap[building.type]) {
-                html += `<span>🏷️ ${typeMap[building.type]}</span><br>`;
+        // ========== ПОПАПЫ ==========
+        function createAnimalPopup(animal) {
+            let html = `<div style="min-width:140px;">`;
+            if (animal.name) html += `<strong>${escapeHtml(animal.name)}</strong><br>`;
+            html += `<span>🧬 ${escapeHtml(animal.species)}</span>`;
+            if (animal.note) html += `<br><span style="font-size:13px;color:#555;">📝 ${escapeHtml(animal.note)}</span>`;
+            if (isAuthorized) {
+                html += `<br><button class="delete-btn" data-table="animals" data-id="${animal.id}" style="margin-top:8px; background:#c0392b; color:white; border:none; padding:4px 12px; border-radius:20px; cursor:pointer;">🗑 Удалить</button>`;
             }
-            if (building.working_hours) html += `<span>🕒 ${escapeHtml(building.working_hours)}</span><br>`;
-            if (building.description) html += `<span style="font-size:13px;color:#555;">📝 ${escapeHtml(building.description)}</span>`;
-        }
-        if (isAuthorized) {
-            html += `<br><button class="delete-btn" data-table="buildings" data-id="${building.id}" style="margin-top:8px; background:#c0392b; color:white; border:none; padding:4px 12px; border-radius:20px; cursor:pointer;">🗑 Удалить</button>`;
-        }
-        html += `</div>`;
-        return html;
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m){
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-
-    // ========== УНИВЕРСАЛЬНОЕ ОБНОВЛЕНИЕ МАРКЕРОВ ==========
-    function updateOrCreateMarker(data, table) {
-        const { id, lat, lng } = data;
-        if (!id || lat === undefined || lng === undefined) return;
-        const key = table + '_' + id;
-
-        let icon, popupContent;
-        if (table === 'animals') {
-            icon = getAnimalIcon(data.species);
-            popupContent = createAnimalPopup(data);
-        } else if (table === 'quests') {
-            icon = getQuestIcon(data.type);
-            popupContent = createQuestPopup(data);
-        } else if (table === 'buildings') {
-            icon = getBuildingIcon(data.category, data.type);
-            popupContent = createBuildingPopup(data);
-        } else {
-            return;
+            html += `</div>`;
+            return html;
         }
 
-        const draggable = isAuthorized;
-
-        if (markersMap.has(key)) {
-            const marker = markersMap.get(key);
-            marker.setLatLng([lat, lng]);
-            marker.setPopupContent(popupContent);
-            marker.setIcon(icon);
-            if (draggable) marker.dragging.enable();
-            else marker.dragging.disable();
-            return;
-        }
-        const marker = L.marker([lat, lng], { draggable: draggable, icon: icon }).addTo(map);
-        marker.bindPopup(popupContent);
-        marker.on('dragend', function() {
-            if (!isAuthorized) return;
-            const newPos = marker.getLatLng();
-            sb.from(table).update({ lat: newPos.lat, lng: newPos.lng }).eq('id', id); // ← sb
-        });
-        marker.data = data;
-        marker._table = table;
-        markersMap.set(key, marker);
-        applyFilters();
-    }
-
-    // ========== ФИЛЬТРАЦИЯ ==========
-    function applyFilters() {
-        markersMap.forEach((marker) => {
-            const table = marker._table;
-            let visible = true;
-            if (table === 'animals') visible = filterAnimals;
-            else if (table === 'quests') visible = filterQuests;
-            else if (table === 'buildings') {
-                const category = marker.data?.category;
-                if (category === 'public') visible = filterPublicBuildings;
-                else if (category === 'technical') visible = filterTechnicalBuildings;
-                else visible = false;
+        function createQuestPopup(quest) {
+            let html = `<div style="min-width:160px;">`;
+            if (quest.location_name) html += `<strong>📍 ${escapeHtml(quest.location_name)}</strong><br>`;
+            if (quest.name) {
+                const typeLabel = quest.type === 'holiday' ? 'Праздничная' : 'По записи';
+                html += `<span>${escapeHtml(quest.name)} (${typeLabel})</span><br>`;
             }
-            if (visible) {
-                if (!map.hasLayer(marker)) marker.addTo(map);
+            if (quest.description) html += `<span style="font-size:13px;color:#555;">📝 ${escapeHtml(quest.description)}</span>`;
+            if (isAuthorized) {
+                html += `<br><button class="delete-btn" data-table="quests" data-id="${quest.id}" style="margin-top:8px; background:#c0392b; color:white; border:none; padding:4px 12px; border-radius:20px; cursor:pointer;">🗑 Удалить</button>`;
+            }
+            html += `</div>`;
+            return html;
+        }
+
+        function createBuildingPopup(building) {
+            let html = `<div style="min-width:140px;">`;
+            if (building.category === 'technical') {
+                html += `<strong>🔧 Техническое здание</strong>`;
             } else {
-                if (map.hasLayer(marker)) map.removeLayer(marker);
+                if (building.name) html += `<strong>${escapeHtml(building.name)}</strong><br>`;
+                const typeMap = {
+                    'cafe': 'Кафе', 'toilet': 'Туалет', 'mother_child': 'Комната матери и ребёнка',
+                    'medical': 'Медпункт', 'event_venue': 'Площадка для мероприятий', 'exposition': 'Экспозиция'
+                };
+                if (building.type && typeMap[building.type]) {
+                    html += `<span>🏷️ ${typeMap[building.type]}</span><br>`;
+                }
+                if (building.working_hours) html += `<span>🕒 ${escapeHtml(building.working_hours)}</span><br>`;
+                if (building.description) html += `<span style="font-size:13px;color:#555;">📝 ${escapeHtml(building.description)}</span>`;
             }
-        });
-    }
+            if (isAuthorized) {
+                html += `<br><button class="delete-btn" data-table="buildings" data-id="${building.id}" style="margin-top:8px; background:#c0392b; color:white; border:none; padding:4px 12px; border-radius:20px; cursor:pointer;">🗑 Удалить</button>`;
+            }
+            html += `</div>`;
+            return html;
+        }
 
-    // Чекбоксы
-    document.getElementById('filterAnimals').addEventListener('change', function() {
-        filterAnimals = this.checked;
-        applyFilters();
-    });
-    document.getElementById('filterQuests').addEventListener('change', function() {
-        filterQuests = this.checked;
-        applyFilters();
-    });
-    document.getElementById('filterPublicBuildings').addEventListener('change', function() {
-        filterPublicBuildings = this.checked;
-        applyFilters();
-    });
-    document.getElementById('filterTechnicalBuildings').addEventListener('change', function() {
-        filterTechnicalBuildings = this.checked;
-        applyFilters();
-    });
-
-    // ========== УПРАВЛЕНИЕ ДОСТУПАМИ ==========
-    function setAuthorization(authorized) {
-        isAuthorized = authorized;
-        const btns = ['addAnimalBtn', 'addQuestBtn', 'addBuildingPublicBtn', 'addBuildingTechnicalBtn'];
-        const statusDiv = document.getElementById('authStatus');
-        btns.forEach(id => {
-            const btn = document.getElementById(id);
-            if (authorized) btn.style.display = 'block';
-            else btn.style.display = 'none';
-        });
-        if (authorized) {
-            statusDiv.innerHTML = '✅ Сотрудник (полный доступ)';
-            statusDiv.className = 'status authorized';
-            markersMap.forEach((marker) => {
-                marker.dragging.enable();
-                const table = marker._table;
-                const data = marker.data;
-                let popup;
-                if (table === 'animals') popup = createAnimalPopup(data);
-                else if (table === 'quests') popup = createQuestPopup(data);
-                else if (table === 'buildings') popup = createBuildingPopup(data);
-                if (popup) marker.setPopupContent(popup);
-                if (table === 'animals') marker.setIcon(getAnimalIcon(data.species));
-                else if (table === 'quests') marker.setIcon(getQuestIcon(data.type));
-                else if (table === 'buildings') marker.setIcon(getBuildingIcon(data.category, data.type));
-            });
-        } else {
-            statusDiv.innerHTML = '👀 Только просмотр';
-            statusDiv.className = 'status';
-            markersMap.forEach((marker) => {
-                marker.dragging.disable();
-                const table = marker._table;
-                const data = marker.data;
-                let popup;
-                if (table === 'animals') popup = createAnimalPopup(data);
-                else if (table === 'quests') popup = createQuestPopup(data);
-                else if (table === 'buildings') popup = createBuildingPopup(data);
-                if (popup) marker.setPopupContent(popup);
-                if (table === 'animals') marker.setIcon(getAnimalIcon(data.species));
-                else if (table === 'quests') marker.setIcon(getQuestIcon(data.type));
-                else if (table === 'buildings') marker.setIcon(getBuildingIcon(data.category, data.type));
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m){
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
             });
         }
-        setTimeout(attachDeleteEvents, 100);
-    }
 
-    function attachDeleteEvents() {
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            if (btn.dataset.listener) return;
-            btn.dataset.listener = 'true';
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (!isAuthorized) return alert("Доступ только для сотрудников");
-                const table = this.dataset.table;
-                const id = this.dataset.id;
-                if (!id) return;
-                if (confirm('Удалить объект?')) {
-                    sb.from(table).delete().eq('id', id).then(({ error }) => { // ← sb
-                        if (error) alert('Ошибка удаления: ' + error.message);
-                    });
+        // ========== ОБНОВЛЕНИЕ МАРКЕРОВ ==========
+        function updateOrCreateMarker(data, table) {
+            const { id, lat, lng } = data;
+            if (!id || lat === undefined || lng === undefined) return;
+            const key = table + '_' + id;
+
+            let icon, popupContent;
+            if (table === 'animals') {
+                icon = getAnimalIcon(data.species);
+                popupContent = createAnimalPopup(data);
+            } else if (table === 'quests') {
+                icon = getQuestIcon(data.type);
+                popupContent = createQuestPopup(data);
+            } else if (table === 'buildings') {
+                icon = getBuildingIcon(data.category, data.type);
+                popupContent = createBuildingPopup(data);
+            } else {
+                return;
+            }
+
+            const draggable = isAuthorized;
+
+            if (markersMap.has(key)) {
+                const marker = markersMap.get(key);
+                marker.setLatLng([lat, lng]);
+                marker.setPopupContent(popupContent);
+                marker.setIcon(icon);
+                if (draggable) marker.dragging.enable();
+                else marker.dragging.disable();
+                return;
+            }
+            const marker = L.marker([lat, lng], { draggable: draggable, icon: icon }).addTo(map);
+            marker.bindPopup(popupContent);
+            marker.on('dragend', function() {
+                if (!isAuthorized) return;
+                const newPos = marker.getLatLng();
+                sb.from(table).update({ lat: newPos.lat, lng: newPos.lng }).eq('id', id);
+            });
+            marker.data = data;
+            marker._table = table;
+            markersMap.set(key, marker);
+            applyFilters();
+        }
+
+        // ========== ФИЛЬТРЫ ==========
+        function applyFilters() {
+            markersMap.forEach((marker) => {
+                const table = marker._table;
+                let visible = true;
+                if (table === 'animals') visible = filterAnimals;
+                else if (table === 'quests') visible = filterQuests;
+                else if (table === 'buildings') {
+                    const category = marker.data?.category;
+                    if (category === 'public') visible = filterPublicBuildings;
+                    else if (category === 'technical') visible = filterTechnicalBuildings;
+                    else visible = false;
+                }
+                if (visible) {
+                    if (!map.hasLayer(marker)) marker.addTo(map);
+                } else {
+                    if (map.hasLayer(marker)) map.removeLayer(marker);
                 }
             });
-        });
-    }
-
-    // ========== ПОДПИСКИ НА ИЗМЕНЕНИЯ В SUPABASE ==========
-    function subscribeToTable(table) {
-        sb.from(table).on('*', (payload) => { // ← sb
-            if (payload.eventType === 'INSERT') {
-                updateOrCreateMarker(payload.new, table);
-            } else if (payload.eventType === 'UPDATE') {
-                updateOrCreateMarker(payload.new, table);
-            } else if (payload.eventType === 'DELETE') {
-                const key = table + '_' + payload.old.id;
-                if (markersMap.has(key)) {
-                    map.removeLayer(markersMap.get(key));
-                    markersMap.delete(key);
-                }
-            }
-        }).subscribe();
-    }
-
-    subscribeToTable('animals');
-    subscribeToTable('quests');
-    subscribeToTable('buildings');
-
-    // ========== АВТОРИЗАЦИЯ ==========
-    document.getElementById('loginBtn').onclick = function() {
-        const pwd = document.getElementById('passwordInput').value;
-        if (pwd === CORRECT_PASSWORD) {
-            setAuthorization(true);
-            document.getElementById('passwordInput').value = '';
-        } else {
-            alert('Неверный пароль');
-            setAuthorization(false);
         }
-    };
-    setAuthorization(false);
 
-    // ========== МОДАЛЬНЫЕ ОКНА ==========
-
-    // Животные
-    const animalModal = document.getElementById('animalModal');
-    document.getElementById('addAnimalBtn').onclick = function() {
-        if (!isAuthorized) return alert("Только для сотрудников");
-        animalModal.style.display = 'flex';
-        document.getElementById('animalName').value = '';
-        document.getElementById('animalSpecies').value = '';
-        document.getElementById('animalNote').value = '';
-    };
-    document.getElementById('closeAnimalModal').onclick = function() { animalModal.style.display = 'none'; };
-    document.getElementById('saveAnimalBtn').onclick = function() {
-        if (!isAuthorized) return;
-        const name = document.getElementById('animalName').value.trim();
-        const species = document.getElementById('animalSpecies').value.trim();
-        const note = document.getElementById('animalNote').value.trim();
-        if (!species) { alert("Укажите вид"); return; }
-        const center = map.getCenter();
-        const data = { species, lat: center.lat, lng: center.lng };
-        if (name) data.name = name;
-        if (note) data.note = note;
-        sb.from('animals').insert([data]).then(({ error }) => { // ← sb
-            if (error) alert('Ошибка: ' + error.message);
-            else animalModal.style.display = 'none';
+        document.getElementById('filterAnimals').addEventListener('change', function() {
+            filterAnimals = this.checked;
+            applyFilters();
         });
-    };
-
-    // Квесты
-    const questModal = document.getElementById('questModal');
-    document.getElementById('addQuestBtn').onclick = function() {
-        if (!isAuthorized) return alert("Только для сотрудников");
-        questModal.style.display = 'flex';
-        document.getElementById('questLocationName').value = '';
-        document.getElementById('questName').value = '';
-        document.getElementById('questType').value = 'holiday';
-        document.getElementById('questDescription').value = '';
-    };
-    document.getElementById('closeQuestModal').onclick = function() { questModal.style.display = 'none'; };
-    document.getElementById('saveQuestBtn').onclick = function() {
-        if (!isAuthorized) return;
-        const location_name = document.getElementById('questLocationName').value.trim();
-        const name = document.getElementById('questName').value.trim();
-        const type = document.getElementById('questType').value;
-        const description = document.getElementById('questDescription').value.trim();
-        if (!location_name || !name) { alert("Укажите локацию и название квеста"); return; }
-        const center = map.getCenter();
-        const data = { location_name, name, type, lat: center.lat, lng: center.lng };
-        if (description) data.description = description;
-        sb.from('quests').insert([data]).then(({ error }) => { // ← sb
-            if (error) alert('Ошибка: ' + error.message);
-            else questModal.style.display = 'none';
+        document.getElementById('filterQuests').addEventListener('change', function() {
+            filterQuests = this.checked;
+            applyFilters();
         });
-    };
-
-    // Общественное здание
-    const buildingPublicModal = document.getElementById('buildingPublicModal');
-    document.getElementById('addBuildingPublicBtn').onclick = function() {
-        if (!isAuthorized) return alert("Только для сотрудников");
-        buildingPublicModal.style.display = 'flex';
-        document.getElementById('buildingPublicName').value = '';
-        document.getElementById('buildingPublicType').value = 'cafe';
-        document.getElementById('buildingPublicHours').value = '';
-        document.getElementById('buildingPublicDescription').value = '';
-    };
-    document.getElementById('closeBuildingPublicModal').onclick = function() { buildingPublicModal.style.display = 'none'; };
-    document.getElementById('saveBuildingPublicBtn').onclick = function() {
-        if (!isAuthorized) return;
-        const name = document.getElementById('buildingPublicName').value.trim();
-        const type = document.getElementById('buildingPublicType').value;
-        const working_hours = document.getElementById('buildingPublicHours').value.trim();
-        const description = document.getElementById('buildingPublicDescription').value.trim();
-        if (!name) { alert("Укажите название"); return; }
-        const center = map.getCenter();
-        const data = { name, type, category: 'public', lat: center.lat, lng: center.lng };
-        if (working_hours) data.working_hours = working_hours;
-        if (description) data.description = description;
-        sb.from('buildings').insert([data]).then(({ error }) => { // ← sb
-            if (error) alert('Ошибка: ' + error.message);
-            else buildingPublicModal.style.display = 'none';
+        document.getElementById('filterPublicBuildings').addEventListener('change', function() {
+            filterPublicBuildings = this.checked;
+            applyFilters();
         });
-    };
+        document.getElementById('filterTechnicalBuildings').addEventListener('change', function() {
+            filterTechnicalBuildings = this.checked;
+            applyFilters();
+        });
 
-    // Техническое здание (без типа)
-    const buildingTechnicalModal = document.getElementById('buildingTechnicalModal');
-    document.getElementById('addBuildingTechnicalBtn').onclick = function() {
-        if (!isAuthorized) return alert("Только для сотрудников");
-        buildingTechnicalModal.style.display = 'flex';
-    };
-    document.getElementById('closeBuildingTechnicalModal').onclick = function() { buildingTechnicalModal.style.display = 'none'; };
-    document.getElementById('saveBuildingTechnicalBtn').onclick = function() {
-        if (!isAuthorized) return;
-        const center = map.getCenter();
-        const data = {
-            name: 'Техническое здание',
-            type: 'technical',
-            category: 'technical',
-            lat: center.lat,
-            lng: center.lng
+        // ========== АВТОРИЗАЦИЯ ==========
+        function setAuthorization(authorized) {
+            isAuthorized = authorized;
+            const btns = ['addAnimalBtn', 'addQuestBtn', 'addBuildingPublicBtn', 'addBuildingTechnicalBtn'];
+            const statusDiv = document.getElementById('authStatus');
+            btns.forEach(id => {
+                const btn = document.getElementById(id);
+                if (authorized) btn.style.display = 'block';
+                else btn.style.display = 'none';
+            });
+            if (authorized) {
+                statusDiv.innerHTML = '✅ Сотрудник (полный доступ)';
+                statusDiv.className = 'status authorized';
+                markersMap.forEach((marker) => {
+                    marker.dragging.enable();
+                    const table = marker._table;
+                    const data = marker.data;
+                    let popup;
+                    if (table === 'animals') popup = createAnimalPopup(data);
+                    else if (table === 'quests') popup = createQuestPopup(data);
+                    else if (table === 'buildings') popup = createBuildingPopup(data);
+                    if (popup) marker.setPopupContent(popup);
+                    if (table === 'animals') marker.setIcon(getAnimalIcon(data.species));
+                    else if (table === 'quests') marker.setIcon(getQuestIcon(data.type));
+                    else if (table === 'buildings') marker.setIcon(getBuildingIcon(data.category, data.type));
+                });
+            } else {
+                statusDiv.innerHTML = '👀 Только просмотр';
+                statusDiv.className = 'status';
+                markersMap.forEach((marker) => {
+                    marker.dragging.disable();
+                    const table = marker._table;
+                    const data = marker.data;
+                    let popup;
+                    if (table === 'animals') popup = createAnimalPopup(data);
+                    else if (table === 'quests') popup = createQuestPopup(data);
+                    else if (table === 'buildings') popup = createBuildingPopup(data);
+                    if (popup) marker.setPopupContent(popup);
+                    if (table === 'animals') marker.setIcon(getAnimalIcon(data.species));
+                    else if (table === 'quests') marker.setIcon(getQuestIcon(data.type));
+                    else if (table === 'buildings') marker.setIcon(getBuildingIcon(data.category, data.type));
+                });
+            }
+            setTimeout(attachDeleteEvents, 100);
+        }
+
+        function attachDeleteEvents() {
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                if (btn.dataset.listener) return;
+                btn.dataset.listener = 'true';
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!isAuthorized) return alert("Доступ только для сотрудников");
+                    const table = this.dataset.table;
+                    const id = this.dataset.id;
+                    if (!id) return;
+                    if (confirm('Удалить объект?')) {
+                        sb.from(table).delete().eq('id', id).then(({ error }) => {
+                            if (error) alert('Ошибка удаления: ' + error.message);
+                        });
+                    }
+                });
+            });
+        }
+
+        // ========== ПОДПИСКИ (ИСПРАВЛЕННЫЕ) ==========
+        function subscribeToTable(table) {
+            const channel = sb.channel(table);
+            channel.on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: table },
+                (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        updateOrCreateMarker(payload.new, table);
+                    } else if (payload.eventType === 'UPDATE') {
+                        updateOrCreateMarker(payload.new, table);
+                    } else if (payload.eventType === 'DELETE') {
+                        const key = table + '_' + payload.old.id;
+                        if (markersMap.has(key)) {
+                            map.removeLayer(markersMap.get(key));
+                            markersMap.delete(key);
+                        }
+                    }
+                }
+            ).subscribe();
+        }
+
+        subscribeToTable('animals');
+        subscribeToTable('quests');
+        subscribeToTable('buildings');
+
+        // ========== КНОПКА ВХОДА ==========
+        document.getElementById('loginBtn').onclick = function() {
+            const pwd = document.getElementById('passwordInput').value;
+            if (pwd === CORRECT_PASSWORD) {
+                setAuthorization(true);
+                document.getElementById('passwordInput').value = '';
+            } else {
+                alert('Неверный пароль');
+                setAuthorization(false);
+            }
         };
-        sb.from('buildings').insert([data]).then(({ error }) => { // ← sb
-            if (error) alert('Ошибка: ' + error.message);
-            else buildingTechnicalModal.style.display = 'none';
-        });
-    };
+        setAuthorization(false);
 
-    // Закрытие модалок по клику вне окна
-    window.onclick = function(e) {
-        if (e.target === animalModal) animalModal.style.display = 'none';
-        if (e.target === questModal) questModal.style.display = 'none';
-        if (e.target === buildingPublicModal) buildingPublicModal.style.display = 'none';
-        if (e.target === buildingTechnicalModal) buildingTechnicalModal.style.display = 'none';
-    };
+        // ========== МОДАЛЬНЫЕ ОКНА (те же) ==========
+        const animalModal = document.getElementById('animalModal');
+        document.getElementById('addAnimalBtn').onclick = function() {
+            if (!isAuthorized) return alert("Только для сотрудников");
+            animalModal.style.display = 'flex';
+            document.getElementById('animalName').value = '';
+            document.getElementById('animalSpecies').value = '';
+            document.getElementById('animalNote').value = '';
+        };
+        document.getElementById('closeAnimalModal').onclick = function() { animalModal.style.display = 'none'; };
+        document.getElementById('saveAnimalBtn').onclick = function() {
+            if (!isAuthorized) return;
+            const name = document.getElementById('animalName').value.trim();
+            const species = document.getElementById('animalSpecies').value.trim();
+            const note = document.getElementById('animalNote').value.trim();
+            if (!species) { alert("Укажите вид"); return; }
+            const center = map.getCenter();
+            const data = { species, lat: center.lat, lng: center.lng };
+            if (name) data.name = name;
+            if (note) data.note = note;
+            sb.from('animals').insert([data]).then(({ error }) => {
+                if (error) alert('Ошибка: ' + error.message);
+                else animalModal.style.display = 'none';
+            });
+        };
 
-    setInterval(attachDeleteEvents, 1000);
-    console.log("Общая карта загружена. Ожидание авторизации.");
-</script>
+        const questModal = document.getElementById('questModal');
+        document.getElementById('addQuestBtn').onclick = function() {
+            if (!isAuthorized) return alert("Только для сотрудников");
+            questModal.style.display = 'flex';
+            document.getElementById('questLocationName').value = '';
+            document.getElementById('questName').value = '';
+            document.getElementById('questType').value = 'holiday';
+            document.getElementById('questDescription').value = '';
+        };
+        document.getElementById('closeQuestModal').onclick = function() { questModal.style.display = 'none'; };
+        document.getElementById('saveQuestBtn').onclick = function() {
+            if (!isAuthorized) return;
+            const location_name = document.getElementById('questLocationName').value.trim();
+            const name = document.getElementById('questName').value.trim();
+            const type = document.getElementById('questType').value;
+            const description = document.getElementById('questDescription').value.trim();
+            if (!location_name || !name) { alert("Укажите локацию и название квеста"); return; }
+            const center = map.getCenter();
+            const data = { location_name, name, type, lat: center.lat, lng: center.lng };
+            if (description) data.description = description;
+            sb.from('quests').insert([data]).then(({ error }) => {
+                if (error) alert('Ошибка: ' + error.message);
+                else questModal.style.display = 'none';
+            });
+        };
+
+        const buildingPublicModal = document.getElementById('buildingPublicModal');
+        document.getElementById('addBuildingPublicBtn').onclick = function() {
+            if (!isAuthorized) return alert("Только для сотрудников");
+            buildingPublicModal.style.display = 'flex';
+            document.getElementById('buildingPublicName').value = '';
+            document.getElementById('buildingPublicType').value = 'cafe';
+            document.getElementById('buildingPublicHours').value = '';
+            document.getElementById('buildingPublicDescription').value = '';
+        };
+        document.getElementById('closeBuildingPublicModal').onclick = function() { buildingPublicModal.style.display = 'none'; };
+        document.getElementById('saveBuildingPublicBtn').onclick = function() {
+            if (!isAuthorized) return;
+            const name = document.getElementById('buildingPublicName').value.trim();
+            const type = document.getElementById('buildingPublicType').value;
+            const working_hours = document.getElementById('buildingPublicHours').value.trim();
+            const description = document.getElementById('buildingPublicDescription').value.trim();
+            if (!name) { alert("Укажите название"); return; }
+            const center = map.getCenter();
+            const data = { name, type, category: 'public', lat: center.lat, lng: center.lng };
+            if (working_hours) data.working_hours = working_hours;
+            if (description) data.description = description;
+            sb.from('buildings').insert([data]).then(({ error }) => {
+                if (error) alert('Ошибка: ' + error.message);
+                else buildingPublicModal.style.display = 'none';
+            });
+        };
+
+        const buildingTechnicalModal = document.getElementById('buildingTechnicalModal');
+        document.getElementById('addBuildingTechnicalBtn').onclick = function() {
+            if (!isAuthorized) return alert("Только для сотрудников");
+            buildingTechnicalModal.style.display = 'flex';
+        };
+        document.getElementById('closeBuildingTechnicalModal').onclick = function() { buildingTechnicalModal.style.display = 'none'; };
+        document.getElementById('saveBuildingTechnicalBtn').onclick = function() {
+            if (!isAuthorized) return;
+            const center = map.getCenter();
+            const data = {
+                name: 'Техническое здание',
+                type: 'technical',
+                category: 'technical',
+                lat: center.lat,
+                lng: center.lng
+            };
+            sb.from('buildings').insert([data]).then(({ error }) => {
+                if (error) alert('Ошибка: ' + error.message);
+                else buildingTechnicalModal.style.display = 'none';
+            });
+        };
+
+        window.onclick = function(e) {
+            if (e.target === animalModal) animalModal.style.display = 'none';
+            if (e.target === questModal) questModal.style.display = 'none';
+            if (e.target === buildingPublicModal) buildingPublicModal.style.display = 'none';
+            if (e.target === buildingTechnicalModal) buildingTechnicalModal.style.display = 'none';
+        };
+
+        setInterval(attachDeleteEvents, 1000);
+        console.log("Общая карта загружена. Ожидание авторизации.");
+    </script>
 </body>
 </html>
