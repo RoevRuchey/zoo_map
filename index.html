@@ -284,9 +284,9 @@
 
 <script>
     // ========== НАСТРОЙКИ SUPABASE ==========
-    const SUPABASE_URL = 'https://rxfgzsscjegyjfyiulti.supabase.co/rest/v1/'; // замените
-    const SUPABASE_ANON_KEY = 'sb_publishable_-0o0yxmSQITeUmnSGu-n3g_mBh0sgyv';      // замените
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_URL = 'https://ваш-проект.supabase.co'; // замените
+    const SUPABASE_ANON_KEY = 'ваш-анонимный-ключ';      // замените
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // ← переименовано
 
     // ========== КАРТА ==========
     const zooMapImageUrl = 'zoo_map.png';
@@ -504,7 +504,7 @@
         marker.on('dragend', function() {
             if (!isAuthorized) return;
             const newPos = marker.getLatLng();
-            supabase.from(table).update({ lat: newPos.lat, lng: newPos.lng }).eq('id', id);
+            sb.from(table).update({ lat: newPos.lat, lng: newPos.lng }).eq('id', id); // ← sb
         });
         marker.data = data;
         marker._table = table;
@@ -608,7 +608,7 @@
                 const id = this.dataset.id;
                 if (!id) return;
                 if (confirm('Удалить объект?')) {
-                    supabase.from(table).delete().eq('id', id).then(({ error }) => {
+                    sb.from(table).delete().eq('id', id).then(({ error }) => { // ← sb
                         if (error) alert('Ошибка удаления: ' + error.message);
                     });
                 }
@@ -618,7 +618,7 @@
 
     // ========== ПОДПИСКИ НА ИЗМЕНЕНИЯ В SUPABASE ==========
     function subscribeToTable(table) {
-        supabase.from(table).on('*', (payload) => {
+        sb.from(table).on('*', (payload) => { // ← sb
             if (payload.eventType === 'INSERT') {
                 updateOrCreateMarker(payload.new, table);
             } else if (payload.eventType === 'UPDATE') {
@@ -672,7 +672,7 @@
         const data = { species, lat: center.lat, lng: center.lng };
         if (name) data.name = name;
         if (note) data.note = note;
-        supabase.from('animals').insert([data]).then(({ error }) => {
+        sb.from('animals').insert([data]).then(({ error }) => { // ← sb
             if (error) alert('Ошибка: ' + error.message);
             else animalModal.style.display = 'none';
         });
@@ -699,7 +699,7 @@
         const center = map.getCenter();
         const data = { location_name, name, type, lat: center.lat, lng: center.lng };
         if (description) data.description = description;
-        supabase.from('quests').insert([data]).then(({ error }) => {
+        sb.from('quests').insert([data]).then(({ error }) => { // ← sb
             if (error) alert('Ошибка: ' + error.message);
             else questModal.style.display = 'none';
         });
@@ -727,7 +727,7 @@
         const data = { name, type, category: 'public', lat: center.lat, lng: center.lng };
         if (working_hours) data.working_hours = working_hours;
         if (description) data.description = description;
-        supabase.from('buildings').insert([data]).then(({ error }) => {
+        sb.from('buildings').insert([data]).then(({ error }) => { // ← sb
             if (error) alert('Ошибка: ' + error.message);
             else buildingPublicModal.style.display = 'none';
         });
@@ -750,7 +750,7 @@
             lat: center.lat,
             lng: center.lng
         };
-        supabase.from('buildings').insert([data]).then(({ error }) => {
+        sb.from('buildings').insert([data]).then(({ error }) => { // ← sb
             if (error) alert('Ошибка: ' + error.message);
             else buildingTechnicalModal.style.display = 'none';
         });
