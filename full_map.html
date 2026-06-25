@@ -402,10 +402,10 @@ function getBuildingIcon(category, type) {
 
     // ========== ПОПАПЫ ==========
     function createAnimalPopup(animal) {
-        let html = `<div style="min-width:140px;">`;
-        if (animal.name) html += `<strong>${escapeHtml(animal.name)}</strong><br>`;
-        if (animal.note) html += `<br><span style="font-size:10px;color:#555;">📝 ${escapeHtml(animal.note)}</span>`;
+        let html = `<div style="min-width:140px; word-wrap: break-word; white-space: normal;">`;
         html += `<span>🧬 ${escapeHtml(animal.species)}</span>`;
+        if (animal.name) html += `<br><strong>${escapeHtml(animal.name)}</strong>`;
+        if (animal.note) html += `<br><span style="font-size:13px; color:#555;">📝 ${escapeHtml(animal.note)}</span>`;
         if (isAuthorized) {
             html += `<br><button class="delete-btn" data-table="animals" data-id="${animal.id}" style="margin-top:8px; background:#c0392b; color:white; border:none; padding:4px 12px; border-radius:20px; cursor:pointer;">🗑 Удалить</button>`;
         }
@@ -414,13 +414,14 @@ function getBuildingIcon(category, type) {
     }
 
     function createQuestPopup(quest) {
-        let html = `<div style="min-width:160px;">`;
+
+        let html = `<div style="min-width:160px; word-wrap: break-word; white-space: normal;">`;
         if (quest.location_name) html += `<strong>📍 ${escapeHtml(quest.location_name)}</strong><br>`;
         if (quest.name) {
             const typeLabel = quest.type === 'holiday' ? 'Праздничная' : 'По записи';
             html += `<span>${escapeHtml(quest.name)} (${typeLabel})</span><br>`;
         }
-        if (quest.description) html += `<span style="font-size:10px;color:#555;">📝 ${escapeHtml(quest.description)}</span>`;
+        if (quest.description) html += `<span style="font-size:13px; color:#555;">📝 ${escapeHtml(quest.description)}</span>`;
         if (isAuthorized) {
             html += `<br><button class="delete-btn" data-table="quests" data-id="${quest.id}" style="margin-top:8px; background:#c0392b; color:white; border:none; padding:4px 12px; border-radius:20px; cursor:pointer;">🗑 Удалить</button>`;
         }
@@ -429,7 +430,7 @@ function getBuildingIcon(category, type) {
     }
 
     function createBuildingPopup(building) {
-        let html = `<div style="min-width:140px;">`;
+        let html = `<div style="min-width:140px; word-wrap: break-word; white-space: normal;">`;
         if (building.category === 'technical') {
             html += `<strong>🔧 Техническое здание</strong>`;
         } else {
@@ -442,7 +443,7 @@ function getBuildingIcon(category, type) {
                 html += `<span>🏷️ ${typeMap[building.type]}</span><br>`;
             }
             if (building.working_hours) html += `<span>🕒 ${escapeHtml(building.working_hours)}</span><br>`;
-            if (building.description) html += `<span style="font-size:10px;color:#555;">📝 ${escapeHtml(building.description)}</span>`;
+            if (building.description) html += `<span style="font-size:13px; color:#555;">📝 ${escapeHtml(building.description)}</span>`;
         }
         if (isAuthorized) {
             html += `<br><button class="delete-btn" data-table="buildings" data-id="${building.id}" style="margin-top:8px; background:#c0392b; color:white; border:none; padding:4px 12px; border-radius:20px; cursor:pointer;">🗑 Удалить</button>`;
@@ -451,15 +452,15 @@ function getBuildingIcon(category, type) {
         return html;
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m){
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m){
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
 
     // ========== ОБНОВЛЕНИЕ МАРКЕРОВ ==========
     function updateOrCreateMarker(data, table) {
