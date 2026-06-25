@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Карта зоопарка – для посетителей</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; }
+        #map { flex: 1; z-index: 1; }
+        .controls {
+            background: white;
+            padding: 12px 20px;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+            z-index: 2;
+        }
+        .info {
+            background: #f0f2f5;
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 14px;
+            color: #1e466e;
+        }
+        .filter-group {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-group label {
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .filter-group input[type="checkbox"] {
+            margin-right: 4px;
+        }
+        .animal-marker div, .building-marker div {
+            font-size: 28px;
+            text-shadow: 0 0 0 #fff, 0 0 0 #fff, 0 0 0 #fff, 0 0 0 #fff,
+                         0 0 4px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.6),
+                         0 0 4px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.6);
+            cursor: default;
+            text-align: center;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+            line-height: 1;
+        }
+        .animal-marker, .building-marker {
+            background: none !important;
+            border: none !important;
+        }
+        /* Ссылка на общую карту – скрыта от посетителей */
+        .hidden-link { display: none; }
+    </style>
+</head>
+<body>
+<div class="controls">
+    <div class="info">🐘 Добро пожаловать в зоопарк!</div>
+    <div class="filter-group">
+        <label><input type="checkbox" id="filterAnimals" checked> 🐘 Животные</label>
+        <label><input type="checkbox" id="filterPublicBuildings" checked> 🏢 Общественные здания</label>
+        <label><input type="checkbox" id="filterTechnicalBuildings" checked> 🔧 Технические здания</label>
+    </div>
+    <div class="info">🔄 Данные обновляются автоматически</div>
+</div>
+<div id="map"></div>
+
+<script>
+    // ========== НАСТРОЙКИ SUPABASE ==========
+    const SUPABASE_URL = 'https://rxfgzsscjegyjfyiulti.supabase.co';   // ваш URL
+    const SUPABASE_ANON_KEY = 'sb_publishable_-0o0yxmSQITeUmnSGu-n3g_mBh0sgyv'; // ваш ключ
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ========== КАРТА ==========
+    const zooMapImageUrl = 'zoo_map.png';
+    const imageBounds = [[56.00, 92.80], [56.04, 92.94]];
+    const map = L.map('map', { zoomControl: true }).setView([56.02, 92.87], 15);
+    map.setMinZoom(12);
+    map.setMaxZoom(18);
+    L.imageOverlay(zooMapImageUrl, imageBounds, { opacity: 1, interactive: false }).addTo(map);
+    map.fitBounds(imageBounds);
+    map.setMaxBounds(imageBounds);
+
+    const markersMap = new Map();
+
+    // Фильтры (по умолчанию включены)
+    let filterAnimals = true;
+    let filterPublicBuildings = true;
+    let filterTechnicalBuildings = true;
+
+    // ========== ИКОНКИ ==========
+    function getAnimalIcon(species) {
+        const s = (species || "").toLowerCase();
+        const mapIcons = {
+            "зубр": "🦬", "верблюд": "🐪", "муфлон": "🐏", "косуля": "🦌",
+            "винторогий козел": "🐐", "горный козел": "🐐", "пятнистый олень": "🦌",
+            "марал": "🦌", "овцебык": "🦬", "лось": "🦌", "гуанако": "🦙",
+            "альпака": "🦙", "северный олень": "🦌", "коза": "🐐", "пони": "🐴",
+            "мини-лошадь": "🐴", "голубой баран": "🐏", "тапир": "🐗", "пекари": "🐗",
+            "гну": "🐃", "орикс": "🐐", "зебра": "🦓", "жираф": "🦒", "осёл": "🐴",
+            "овца": "🐑", "валлийская овца": "🐑",
+            "дикобраз": "🦔", "пака": "🐭", "мара": "🐰", "заяц": "🐇",
+            "белка": "🐿️", "белка-летяга": "🐿️", "белка превоста": "🐿️",
+            "лемур": "🐒", "потто": "🐒", "галаго": "🐒", "игрунка": "🐒",
+            "тамарин": "🐒", "саймири": "🐒", "капуцин": "🐒", "мангобей": "🐒",
+            "колобус": "🐒", "гиббон": "🐒", "шимпанзе": "🐒",
+            "хаски": "🐕", "самоедская собака": "🐕", "енотовидная собака": "🦝",
+            "лесной хорек": "🦡", "носуха": "🦝", "скунс": "🦨", "енот": "🦝",
+            "мангуст": "🦡", "генетта": "🐱", "сурикат": "🦡", "фенек": "🦊",
+            "волк": "🐺", "белый медведь": "🐻‍❄️", "бурый медведь": "🐻",
+            "медведь бурый тяньшанский": "🐻", "медведь гималайский": "🐻",
+            "харза": "🦡", "соболь": "🦡", "барсук": "🦡", "выдра": "🦦",
+            "рысь": "🐱", "рысь рыжая": "🐱", "сервал": "🐱", "кот": "🐱",
+            "кот бенгальский": "🐱", "кот дальневосточный": "🐱", "леопард": "🐆",
+            "пума": "🐆", "тигр": "🐅", "ягуар": "🐆", "лев": "🦁",
+            "манул": "🐱", "камышовый кот": "🐱", "лиса": "🦊",
+            "валлаби": "🦘", "даман": "🐭", "ёж": "🦔",
+            "хищная птица": "🦅", "орел": "🦅", "сокол": "🦅", "ястреб": "🦅",
+            "птица": "🐦", "попугай": "🦜", "страус": "🐦",
+            "рептилия": "🐍", "ящерица": "🦎", "крокодил": "🐊",
+            "амфибия": "🐸", "рыба": "🐟", "акула": "🦈",
+            "насекомое": "🐞", "паук": "🕷️"
+        };
+        let emoji = "🐾";
+        for (let [kw, e] of Object.entries(mapIcons)) {
+            if (s.includes(kw)) { emoji = e; break; }
+        }
+        if (emoji === "🐾") {
+            if (s.includes("олень") || s.includes("лось")) emoji = "🦌";
+            else if (s.includes("коз") || s.includes("баран") || s.includes("овц")) emoji = "🐐";
+            else if (s.includes("лошад") || s.includes("пони")) emoji = "🐴";
+            else if (s.includes("медвед")) emoji = "🐻";
+            else if (s.includes("обезьян") || s.includes("примат")) emoji = "🐒";
+            else if (s.includes("собак") || s.includes("волк")) emoji = "🐺";
+            else if (s.includes("лис")) emoji = "🦊";
+            else if (s.includes("кот") || s.includes("кошк")) emoji = "🐱";
+            else if (s.includes("грызун") || s.includes("белк") || s.includes("заяц")) emoji = "🐭";
+            else if (s.includes("птиц") || s.includes("сокол") || s.includes("орел")) emoji = "🦅";
+            else if (s.includes("змея") || s.includes("ящериц")) emoji = "🐍";
+            else if (s.includes("крокодил")) emoji = "🐊";
+            else if (s.includes("рыб")) emoji = "🐟";
+            else if (s.includes("амфиб") || s.includes("лягуш")) emoji = "🐸";
+        }
+        return L.divIcon({
+            html: `<div>${emoji}</div>`,
+            iconSize: [32, 32],
+            popupAnchor: [0, -12],
+            className: 'animal-marker'
+        });
+    }
+
+    function getBuildingIcon(category, type) {
+        if (category === 'technical') {
+            return L.divIcon({
+                html: `<div>🔧</div>`,
+                iconSize: [32, 32],
+                popupAnchor: [0, -12],
+                className: 'building-marker'
+            });
+        }
+        let emoji = '🏢';
+        const t = (type || '').toLowerCase();
+        if (t.includes('cafe')) emoji = '☕';
+        else if (t.includes('toilet')) emoji = '🚻';
+        else if (t.includes('mother_child')) emoji = '👶';
+        else if (t.includes('medical')) emoji = '🏥';
+        else if (t.includes('event_venue')) emoji = '🎪';
+        else if (t.includes('exposition')) emoji = '🌴';
+        return L.divIcon({
+            html: `<div>${emoji}</div>`,
+            iconSize: [32, 32],
+            popupAnchor: [0, -12],
+            className: 'building-marker'
+        });
+    }
+
+    // ========== ПОПАПЫ ==========
+    function createAnimalPopup(animal) {
+        let html = `<div style="min-width:140px;">`;
+        if (animal.name) html += `<strong>${escapeHtml(animal.name)}</strong><br>`;
+        html += `<span>🧬 ${escapeHtml(animal.species)}</span>`;
+        if (animal.note) html += `<br><span style="font-size:13px;color:#555;">📝 ${escapeHtml(animal.note)}</span>`;
+        html += `</div>`;
+        return html;
+    }
+
+    function createBuildingPopup(building) {
+        let html = `<div style="min-width:140px;">`;
+        if (building.category === 'technical') {
+            html += `<strong>🔧 Техническое здание</strong>`;
+        } else {
+            if (building.name) html += `<strong>${escapeHtml(building.name)}</strong><br>`;
+            const typeMap = {
+                'cafe': 'Кафе', 'toilet': 'Туалет', 'mother_child': 'Комната матери и ребёнка',
+                'medical': 'Медпункт', 'event_venue': 'Площадка для мероприятий', 'exposition': 'Экспозиция'
+            };
+            if (building.type && typeMap[building.type]) {
+                html += `<span>🏷️ ${typeMap[building.type]}</span><br>`;
+            }
+            if (building.working_hours) html += `<span>🕒 ${escapeHtml(building.working_hours)}</span><br>`;
+            if (building.description) html += `<span style="font-size:13px;color:#555;">📝 ${escapeHtml(building.description)}</span>`;
+        }
+        html += `</div>`;
+        return html;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m){
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // ========== ОБНОВЛЕНИЕ МАРКЕРОВ ==========
+    function updateOrCreateMarker(data, table) {
+        const { id, lat, lng } = data;
+        if (!id || lat === undefined || lng === undefined) return;
+        const key = table + '_' + id;
+
+        let icon, popupContent;
+        if (table === 'animals') {
+            icon = getAnimalIcon(data.species);
+            popupContent = createAnimalPopup(data);
+        } else if (table === 'buildings') {
+            // Показываем только здания (общественные и технические)
+            icon = getBuildingIcon(data.category, data.type);
+            popupContent = createBuildingPopup(data);
+        } else {
+            return; // не показываем другие таблицы (квесты)
+        }
+
+        if (markersMap.has(key)) {
+            const marker = markersMap.get(key);
+            marker.setLatLng([lat, lng]);
+            marker.setPopupContent(popupContent);
+            marker.setIcon(icon);
+            return;
+        }
+        const marker = L.marker([lat, lng], { draggable: false, icon: icon }).addTo(map);
+        marker.bindPopup(popupContent);
+        marker.data = data;
+        marker._table = table;
+        markersMap.set(key, marker);
+        applyFilters(); // применить фильтры к новому маркеру
+    }
+
+    // ========== ФИЛЬТРЫ ==========
+    function applyFilters() {
+        markersMap.forEach((marker) => {
+            const table = marker._table;
+            let visible = true;
+            if (table === 'animals') visible = filterAnimals;
+            else if (table === 'buildings') {
+                const category = marker.data?.category;
+                if (category === 'public') visible = filterPublicBuildings;
+                else if (category === 'technical') visible = filterTechnicalBuildings;
+                else visible = false;
+            }
+            if (visible) {
+                if (!map.hasLayer(marker)) marker.addTo(map);
+            } else {
+                if (map.hasLayer(marker)) map.removeLayer(marker);
+            }
+        });
+    }
+
+    document.getElementById('filterAnimals').addEventListener('change', function() {
+        filterAnimals = this.checked;
+        applyFilters();
+    });
+    document.getElementById('filterPublicBuildings').addEventListener('change', function() {
+        filterPublicBuildings = this.checked;
+        applyFilters();
+    });
+    document.getElementById('filterTechnicalBuildings').addEventListener('change', function() {
+        filterTechnicalBuildings = this.checked;
+        applyFilters();
+    });
+
+    // ========== ЗАГРУЗКА ДАННЫХ ==========
+    async function loadInitialData() {
+        // Животные
+        const { data: animals, error: errAnimals } = await sb.from('animals').select('*');
+        if (errAnimals) console.error('Ошибка загрузки животных:', errAnimals);
+        else animals.forEach(animal => updateOrCreateMarker(animal, 'animals'));
+
+        // Здания (общественные и технические)
+        const { data: buildings, error: errBuildings } = await sb.from('buildings').select('*');
+        if (errBuildings) console.error('Ошибка загрузки зданий:', errBuildings);
+        else buildings.forEach(building => updateOrCreateMarker(building, 'buildings'));
+    }
+
+    // ========== ПОДПИСКИ REALTIME ==========
+    function subscribeToTable(table) {
+        const channel = sb.channel(table);
+        channel.on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: table },
+            (payload) => {
+                if (payload.eventType === 'INSERT') {
+                    updateOrCreateMarker(payload.new, table);
+                } else if (payload.eventType === 'UPDATE') {
+                    updateOrCreateMarker(payload.new, table);
+                } else if (payload.eventType === 'DELETE') {
+                    const key = table + '_' + payload.old.id;
+                    if (markersMap.has(key)) {
+                        map.removeLayer(markersMap.get(key));
+                        markersMap.delete(key);
+                    }
+                }
+            }
+        ).subscribe();
+    }
+
+    // Подписываемся только на таблицы, которые показываем
+    subscribeToTable('animals');
+    subscribeToTable('buildings');
+    // Квесты не подписываем и не показываем
+
+    // Загружаем существующие данные
+    loadInitialData();
+
+    console.log("Публичная карта загружена.");
+</script>
+</body>
+</html>
