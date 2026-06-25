@@ -148,43 +148,41 @@
             else if (s.includes("амфиб") || s.includes("лягуш")) emoji = "🐸";
         }
         return L.divIcon({
-            html: `<div>${emoji}</div>`,
-            iconSize: [32, 32],
-            popupAnchor: [0, -12],
-            className: 'animal-marker'
-        });
-    }
-
-    function getBuildingIcon(category, type) {
-        if (category === 'technical') {
-            return L.divIcon({
-                html: `<div>🔧</div>`,
-                iconSize: [32, 32],
-                popupAnchor: [0, -12],
-                className: 'building-marker'
+                html: `<div style="font-size: 22px; text-shadow: 0 0 0 #fff, 0 0 0 #fff, 0 0 0 #fff, 0 0 0 #fff, 0 0 4px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.6); cursor: default; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); line-height: 1;">${emoji}</div>`,
+                iconSize: [26, 26],
+                popupAnchor: [0, -8],
+                className: 'animal-marker'
             });
         }
-        let emoji = '🏢';
-        const t = (type || '').toLowerCase();
-        if (t.includes('cafe')) emoji = '☕';
-        else if (t.includes('toilet')) emoji = '🚻';
-        else if (t.includes('mother_child')) emoji = '👶';
-        else if (t.includes('medical')) emoji = '🏥';
-        else if (t.includes('event_venue')) emoji = '🎪';
-        else if (t.includes('exposition')) emoji = '🌴';
+
+    function getBuildingIcon(name, type) {
+        const n = (name || "").toLowerCase();
+        const t = (type || "").toLowerCase();
+        let emoji = "🏢";
+        if (n.includes("медпункт") || n.includes("мед") || n.includes("здрав")) emoji = "🏥";
+        else if (n.includes("вет") || n.includes("клин")) emoji = "💉";
+        else if (n.includes("ребен") || n.includes("дет") || n.includes("матери")) emoji = "👶";
+        else if (n.includes("вход") || n.includes("касс") || n.includes("турникет")) emoji = "🚪";
+        else if (n.includes("кафе") || n.includes("столовая") || n.includes("буфет")) emoji = "☕";
+        else if (n.includes("туалет") || n.includes("wc") || n.includes("санузел")) emoji = "🚻";
+        else if (n.includes("парков") || n.includes("автостоянк")) emoji = "🅿️";
+        else if (n.includes("магазин") || n.includes("сувенир") || n.includes("киоск")) emoji = "🛍️";
+        else if (t.includes("public") || t.includes("общественное")) emoji = "🏢";
+        else emoji = "🏢";
+    
         return L.divIcon({
-            html: `<div>${emoji}</div>`,
-            iconSize: [32, 32],
-            popupAnchor: [0, -12],
+            html: `<div style="font-size: 22px; text-shadow: 0 0 0 #fff, 0 0 0 #fff, 0 0 0 #fff, 0 0 0 #fff, 0 0 4px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.6); cursor: default; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); line-height: 1;">${emoji}</div>`,
+            iconSize: [26, 26],
+            popupAnchor: [0, -8],
             className: 'building-marker'
         });
     }
 
     // ========== ПОПАПЫ ==========
     function createAnimalPopup(animal) {
-        let html = `<div style="min-width:140px;">`;
-        if (animal.name) html += `<strong>${escapeHtml(animal.name)}</strong><br>`;
+        let html = `<div style="min-width:140px; word-wrap: break-word; white-space: normal;">`;
         html += `<span>🧬 ${escapeHtml(animal.species)}</span>`;
+        if (animal.name) html += `<br><strong>${escapeHtml(animal.name)}</strong>`;
         if (animal.note) html += `<br><span style="font-size:13px;color:#555;">📝 ${escapeHtml(animal.note)}</span>`;
         html += `</div>`;
         return html;
