@@ -501,7 +501,15 @@
         marker.on('dragend', function() {
             if (!isAuthorized) return;
             const newPos = marker.getLatLng();
-            sb.from(table).update({ lat: newPos.lat, lng: newPos.lng }).eq('id', id);
+            const table = marker._table;
+            const id = marker.data.id;
+            if (!id) {
+                console.error('Нет id для обновления');
+                return;
+            }
+            sb.from(table).update({ lat: newPos.lat, lng: newPos.lng }).eq('id', id)
+                .then(response => console.log('Обновлено:', response))
+                .catch(err => console.error('Ошибка обновления:', err));
         });
         marker.data = data;
         marker._table = table;
