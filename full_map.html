@@ -360,7 +360,7 @@
         }
         return L.divIcon({
             html: `<div>${emoji}</div>`,
-            iconSize: [32, 32],
+            iconSize: [28, 28],
             popupAnchor: [0, -12],
             className: 'animal-marker'
         });
@@ -370,7 +370,7 @@
         let emoji = type === 'holiday' ? '📌' : '📅';
         return L.divIcon({
             html: `<div>${emoji}</div>`,
-            iconSize: [32, 32],
+            iconSize: [28, 28],
             popupAnchor: [0, -12],
             className: 'quest-marker'
         });
@@ -380,7 +380,7 @@
         if (category === 'technical') {
             return L.divIcon({
                 html: `<div>🔧</div>`,
-                iconSize: [32, 32],
+                iconSize: [28, 28],
                 popupAnchor: [0, -12],
                 className: 'building-marker'
             });
@@ -395,7 +395,7 @@
         else if (t.includes('exposition')) emoji = '🌴';
         return L.divIcon({
             html: `<div>${emoji}</div>`,
-            iconSize: [32, 32],
+            iconSize: [28, 28],
             popupAnchor: [0, -12],
             className: 'building-marker'
         });
