@@ -274,7 +274,7 @@
 <div id="buildingTechnicalModal" class="modal">
     <div class="modal-card">
         <h3>Новое техническое здание</h3>
-        <p style="color: #555; font-size: 14px; margin-bottom: 12px;">Здание будет создано с иконкой 🔧 и подписью «Техническое здание».</p>
+        <p style="color: #555; font-size: 10px; margin-bottom: 12px;">Здание будет создано с иконкой 🔧 и подписью «Техническое здание».</p>
         <button id="saveBuildingTechnicalBtn">🔧 Создать</button>
         <button id="closeBuildingTechnicalModal" class="btn-close-modal">Отмена</button>
     </div>
@@ -406,7 +406,7 @@
         let html = `<div style="min-width:140px;">`;
         if (animal.name) html += `<strong>${escapeHtml(animal.name)}</strong><br>`;
         html += `<span>🧬 ${escapeHtml(animal.species)}</span>`;
-        if (animal.note) html += `<br><span style="font-size:13px;color:#555;">📝 ${escapeHtml(animal.note)}</span>`;
+        if (animal.note) html += `<br><span style="font-size:10px;color:#555;">📝 ${escapeHtml(animal.note)}</span>`;
         if (isAuthorized) {
             html += `<br><button class="delete-btn" data-table="animals" data-id="${animal.id}" style="margin-top:8px; background:#c0392b; color:white; border:none; padding:4px 12px; border-radius:20px; cursor:pointer;">🗑 Удалить</button>`;
         }
@@ -421,7 +421,7 @@
             const typeLabel = quest.type === 'holiday' ? 'Праздничная' : 'По записи';
             html += `<span>${escapeHtml(quest.name)} (${typeLabel})</span><br>`;
         }
-        if (quest.description) html += `<span style="font-size:13px;color:#555;">📝 ${escapeHtml(quest.description)}</span>`;
+        if (quest.description) html += `<span style="font-size:10px;color:#555;">📝 ${escapeHtml(quest.description)}</span>`;
         if (isAuthorized) {
             html += `<br><button class="delete-btn" data-table="quests" data-id="${quest.id}" style="margin-top:8px; background:#c0392b; color:white; border:none; padding:4px 12px; border-radius:20px; cursor:pointer;">🗑 Удалить</button>`;
         }
@@ -443,7 +443,7 @@
                 html += `<span>🏷️ ${typeMap[building.type]}</span><br>`;
             }
             if (building.working_hours) html += `<span>🕒 ${escapeHtml(building.working_hours)}</span><br>`;
-            if (building.description) html += `<span style="font-size:13px;color:#555;">📝 ${escapeHtml(building.description)}</span>`;
+            if (building.description) html += `<span style="font-size:10px;color:#555;">📝 ${escapeHtml(building.description)}</span>`;
         }
         if (isAuthorized) {
             html += `<br><button class="delete-btn" data-table="buildings" data-id="${building.id}" style="margin-top:8px; background:#c0392b; color:white; border:none; padding:4px 12px; border-radius:20px; cursor:pointer;">🗑 Удалить</button>`;
