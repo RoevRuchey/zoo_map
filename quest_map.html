@@ -106,12 +106,11 @@
     let filterByAppointment = true;
 
     // ========== ИКОНКИ ==========
-    function getQuestIcon(type) {
-        let emoji = type === 'holiday' ? '📌' : '📅';
+    function getQuestIcon() {
         return L.divIcon({
-            html: `<div>${emoji}</div>`,
-            iconSize: [32, 32],
-            popupAnchor: [0, -12],
+            html: `<div style="font-size: 22px; text-shadow: 0 0 0 #fff, 0 0 0 #fff, 0 0 0 #fff, 0 0 0 #fff, 0 0 4px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.6), 0 0 4px rgba(0,0,0,0.6); cursor: default; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); line-height: 1;">📍</div>`,
+            iconSize: [26, 26],
+            popupAnchor: [0, -8],
             className: 'quest-marker'
         });
     }
