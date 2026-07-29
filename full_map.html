@@ -176,6 +176,11 @@
         #addAnimalBtn, #addQuestBtn, #addBuildingPublicBtn, #addBuildingTechnicalBtn {
             display: none;
         }
+        #logoutBtn {
+            display: none;
+            background: #c0392b;
+        }
+        #logoutBtn:hover { background: #962d22; }
     </style>
 </head>
 <body>
@@ -196,8 +201,10 @@
     </div>
     <div class="right-controls">
         <div class="auth-area">
-            <input type="password" id="passwordInput" placeholder="Пароль сотрудника">
+            <input type="email" id="emailInput" placeholder="Email сотрудника" style="width:160px;">
+            <input type="password" id="passwordInput" placeholder="Пароль">
             <button id="loginBtn">🔑 Войти</button>
+            <button id="logoutBtn">🚪 Выйти</button>
             <div id="authStatus" class="status">👀 Только просмотр</div>
         </div>
     </div>
@@ -289,8 +296,7 @@
 </div>
 
 <script>
-    // ========== НАСТРОЙКИ SUPABASE (замените на свои) ==========
-    
+    // ========== НАСТРОЙКИ SUPABASE ==========
     const SUPABASE_URL = 'https://nnacqcrbqgrjwogjbyps.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_oN1TYNGbm0HiXWhN-37NnA_vrs3SY6Y';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -307,7 +313,6 @@
 
     const markersMap = new Map();
     let isAuthorized = false;
-    const CORRECT_PASSWORD = "1";
 
     let filterAnimals = true;
     let filterQuests = true;
@@ -574,6 +579,10 @@ function getBuildingIcon(category, type) {
             if (authorized) btn.style.display = 'block';
             else btn.style.display = 'none';
         });
+        document.getElementById('loginBtn').style.display = authorized ? 'none' : 'inline-block';
+        document.getElementById('logoutBtn').style.display = authorized ? 'inline-block' : 'none';
+        document.getElementById('emailInput').style.display = authorized ? 'none' : 'inline-block';
+        document.getElementById('passwordInput').style.display = authorized ? 'none' : 'inline-block';
         if (authorized) {
             statusDiv.innerHTML = '✅ Сотрудник (полный доступ)';
             statusDiv.className = 'status authorized';
@@ -654,20 +663,17 @@ function getBuildingIcon(category, type) {
         });
     }
 
-    // ========== ЗАГРУЗКА СУЩЕСТВУЮЩИХ ДАННЫХ (ИСПРАВЛЕНИЕ) ==========
+    // ========== ЗАГРУЗКА СУЩЕСТВУЮЩИХ ДАННЫХ ==========
     async function loadInitialData() {
         console.log('Загрузка существующих данных...');
-        // Животные
         const { data: animals, error: errAnimals } = await sb.from('animals').select('*');
         if (errAnimals) console.error('Ошибка загрузки животных:', errAnimals);
         else animals.forEach(animal => updateOrCreateMarker(animal, 'animals'));
 
-        // Квесты
         const { data: quests, error: errQuests } = await sb.from('quests').select('*');
         if (errQuests) console.error('Ошибка загрузки квестов:', errQuests);
         else quests.forEach(quest => updateOrCreateMarker(quest, 'quests'));
 
-        // Здания
         const { data: buildings, error: errBuildings } = await sb.from('buildings').select('*');
         if (errBuildings) console.error('Ошибка загрузки зданий:', errBuildings);
         else buildings.forEach(building => updateOrCreateMarker(building, 'buildings'));
@@ -675,26 +681,47 @@ function getBuildingIcon(category, type) {
         console.log('Все данные загружены.');
     }
 
+    // ========== SUPABASE AUTH ==========
+    sb.auth.onAuthStateChange((event, session) => {
+        if (session) {
+            setAuthorization(true);
+        } else {
+            setAuthorization(false);
+        }
+    });
+
+    document.getElementById('loginBtn').onclick = async function() {
+        const email = document.getElementById('emailInput').value.trim();
+        const password = document.getElementById('passwordInput').value;
+        if (!email || !password) {
+            alert("Введите email и пароль");
+            return;
+        }
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) {
+            alert('Ошибка входа: ' + error.message);
+        } else {
+            document.getElementById('emailInput').value = '';
+            document.getElementById('passwordInput').value = '';
+        }
+    };
+
+    document.getElementById('logoutBtn').onclick = async function() {
+        await sb.auth.signOut();
+    };
+
+    document.getElementById('passwordInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('loginBtn').click();
+    });
+    document.getElementById('emailInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('passwordInput').focus();
+    });
+
     // ========== ЗАПУСК ==========
-    // Сначала подписываемся на изменения
     subscribeToTable('animals');
     subscribeToTable('quests');
     subscribeToTable('buildings');
-
-    // Затем загружаем существующие данные
     loadInitialData();
-
-    // ========== КНОПКА ВХОДА ==========
-    document.getElementById('loginBtn').onclick = function() {
-        const pwd = document.getElementById('passwordInput').value;
-        if (pwd === CORRECT_PASSWORD) {
-            setAuthorization(true);
-            document.getElementById('passwordInput').value = '';
-        } else {
-            alert('Неверный пароль');
-            setAuthorization(false);
-        }
-    };
     setAuthorization(false);
 
     // ========== ОБРАБОТЧИКИ СОХРАНЕНИЯ ==========
