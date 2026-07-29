@@ -176,11 +176,6 @@
         #addAnimalBtn, #addQuestBtn, #addBuildingPublicBtn, #addBuildingTechnicalBtn {
             display: none;
         }
-        #logoutBtn {
-            display: none;
-            background: #c0392b;
-        }
-        #logoutBtn:hover { background: #962d22; }
     </style>
 </head>
 <body>
@@ -201,10 +196,8 @@
     </div>
     <div class="right-controls">
         <div class="auth-area">
-            <input type="email" id="emailInput" placeholder="Email сотрудника" style="width:160px;">
-            <input type="password" id="passwordInput" placeholder="Пароль">
+            <input type="password" id="passwordInput" placeholder="Пароль сотрудника">
             <button id="loginBtn">🔑 Войти</button>
-            <button id="logoutBtn">🚪 Выйти</button>
             <div id="authStatus" class="status">👀 Только просмотр</div>
         </div>
     </div>
@@ -296,12 +289,10 @@
 </div>
 
 <script>
-    // ========== НАСТРОЙКИ SUPABASE ==========
     const SUPABASE_URL = 'https://nnacqcrbqgrjwogjbyps.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_oN1TYNGbm0HiXWhN-37NnA_vrs3SY6Y';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ========== КАРТА ==========
     const zooMapImageUrl = 'zoo_map.png';
     const imageBounds = [[56.00, 92.80], [56.04, 92.94]];
     const map = L.map('map', { zoomControl: true }).setView([56.02, 92.87], 15);
@@ -313,13 +304,13 @@
 
     const markersMap = new Map();
     let isAuthorized = false;
+    const CORRECT_PASSWORD = "1";
 
     let filterAnimals = true;
     let filterQuests = true;
     let filterPublicBuildings = true;
     let filterTechnicalBuildings = true;
 
-    // ========== ИКОНКИ ==========
 function getAnimalIcon(species) {
     const s = (species || "").toLowerCase();
     const mapIcons = {
@@ -414,7 +405,6 @@ function getBuildingIcon(category, type) {
     });
 }
 
-    // ========== ПОПАПЫ ==========
     function createAnimalPopup(animal) {
         let html = `<div style="min-width:140px; word-wrap: break-word; white-space: normal;">`;
         html += `<span>🧬 <strong>${escapeHtml(animal.species)}</strong></span>`;
@@ -428,7 +418,6 @@ function getBuildingIcon(category, type) {
     }
 
     function createQuestPopup(quest) {
-
         let html = `<div style="min-width:160px; word-wrap: break-word; white-space: normal;">`;
         if (quest.location_name) html += `<strong>📍 ${escapeHtml(quest.location_name)}</strong><br>`;
         if (quest.name) {
@@ -466,17 +455,16 @@ function getBuildingIcon(category, type) {
         return html;
     }
 
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/[&<>]/g, function(m){
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m){
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
 
-    // ========== ОБНОВЛЕНИЕ МАРКЕРОВ ==========
     function updateOrCreateMarker(data, table) {
         const { id, lat, lng } = data;
         if (!id || lat === undefined || lng === undefined) {
@@ -531,7 +519,6 @@ function getBuildingIcon(category, type) {
         applyFilters();
     }
 
-    // ========== ФИЛЬТРЫ ==========
     function applyFilters() {
         markersMap.forEach((marker) => {
             const table = marker._table;
@@ -569,7 +556,6 @@ function getBuildingIcon(category, type) {
         applyFilters();
     });
 
-    // ========== АВТОРИЗАЦИЯ ==========
     function setAuthorization(authorized) {
         isAuthorized = authorized;
         const btns = ['addAnimalBtn', 'addQuestBtn', 'addBuildingPublicBtn', 'addBuildingTechnicalBtn'];
@@ -579,10 +565,6 @@ function getBuildingIcon(category, type) {
             if (authorized) btn.style.display = 'block';
             else btn.style.display = 'none';
         });
-        document.getElementById('loginBtn').style.display = authorized ? 'none' : 'inline-block';
-        document.getElementById('logoutBtn').style.display = authorized ? 'inline-block' : 'none';
-        document.getElementById('emailInput').style.display = authorized ? 'none' : 'inline-block';
-        document.getElementById('passwordInput').style.display = authorized ? 'none' : 'inline-block';
         if (authorized) {
             statusDiv.innerHTML = '✅ Сотрудник (полный доступ)';
             statusDiv.className = 'status authorized';
@@ -638,7 +620,6 @@ function getBuildingIcon(category, type) {
         });
     }
 
-    // ========== ПОДПИСКИ REALTIME ==========
     function subscribeToTable(table) {
         const channel = sb.channel(table);
         channel.on(
@@ -663,7 +644,6 @@ function getBuildingIcon(category, type) {
         });
     }
 
-    // ========== ЗАГРУЗКА СУЩЕСТВУЮЩИХ ДАННЫХ ==========
     async function loadInitialData() {
         console.log('Загрузка существующих данных...');
         const { data: animals, error: errAnimals } = await sb.from('animals').select('*');
@@ -681,52 +661,23 @@ function getBuildingIcon(category, type) {
         console.log('Все данные загружены.');
     }
 
-    // ========== SUPABASE AUTH ==========
-    sb.auth.onAuthStateChange((event, session) => {
-        if (session) {
-            setAuthorization(true);
-        } else {
-            setAuthorization(false);
-        }
-    });
-
-    document.getElementById('loginBtn').onclick = async function() {
-        const email = document.getElementById('emailInput').value.trim();
-        const password = document.getElementById('passwordInput').value;
-        if (!email || !password) {
-            alert("Введите email и пароль");
-            return;
-        }
-        const { error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) {
-            alert('Ошибка входа: ' + error.message);
-        } else {
-            document.getElementById('emailInput').value = '';
-            document.getElementById('passwordInput').value = '';
-        }
-    };
-
-    document.getElementById('logoutBtn').onclick = async function() {
-        await sb.auth.signOut();
-    };
-
-    document.getElementById('passwordInput').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('loginBtn').click();
-    });
-    document.getElementById('emailInput').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('passwordInput').focus();
-    });
-
-    // ========== ЗАПУСК ==========
     subscribeToTable('animals');
     subscribeToTable('quests');
     subscribeToTable('buildings');
     loadInitialData();
+
+    document.getElementById('loginBtn').onclick = function() {
+        const pwd = document.getElementById('passwordInput').value;
+        if (pwd === CORRECT_PASSWORD) {
+            setAuthorization(true);
+            document.getElementById('passwordInput').value = '';
+        } else {
+            alert('Неверный пароль');
+            setAuthorization(false);
+        }
+    };
     setAuthorization(false);
 
-    // ========== ОБРАБОТЧИКИ СОХРАНЕНИЯ ==========
-
-    // Животные
     const animalModal = document.getElementById('animalModal');
     document.getElementById('addAnimalBtn').onclick = function() {
         if (!isAuthorized) return alert("Только для сотрудников");
@@ -756,7 +707,6 @@ function getBuildingIcon(category, type) {
         }
     };
 
-    // Квесты
     const questModal = document.getElementById('questModal');
     document.getElementById('addQuestBtn').onclick = function() {
         if (!isAuthorized) return alert("Только для сотрудников");
@@ -787,7 +737,6 @@ function getBuildingIcon(category, type) {
         }
     };
 
-    // Общественное здание
     const buildingPublicModal = document.getElementById('buildingPublicModal');
     document.getElementById('addBuildingPublicBtn').onclick = function() {
         if (!isAuthorized) return alert("Только для сотрудников");
@@ -819,7 +768,6 @@ function getBuildingIcon(category, type) {
         }
     };
 
-    // Техническое здание
     const buildingTechnicalModal = document.getElementById('buildingTechnicalModal');
     document.getElementById('addBuildingTechnicalBtn').onclick = function() {
         if (!isAuthorized) return alert("Только для сотрудников");
@@ -846,7 +794,6 @@ function getBuildingIcon(category, type) {
         }
     };
 
-    // Закрытие модалок по клику вне окна
     window.onclick = function(e) {
         if (e.target === animalModal) animalModal.style.display = 'none';
         if (e.target === questModal) questModal.style.display = 'none';
